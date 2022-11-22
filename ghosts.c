@@ -35,10 +35,11 @@ struct ghosts *ghosts_setup(unsigned int num_ghosts) {
         G->n = num_ghosts;  // al campo n di G assegniamo num_ghosts
         G->ghost = (struct ghost *)calloc(num_ghosts,sizeof(struct ghost)); //al campo ghost di G assegniamo dinamicamente la memoria
         for(i = 0; i < G->n; i++) {                     //per ogni ghost presente assegniamo una UNK_POSITION e una direzione casuale
-            G->ghost->pos   = UNK_POSITION ;
-            G->ghost->dir   = UNK_DIRECTION;
-            G->ghost->id    = i;
-            G->ghost->status = UNK_GHOST_STATUS;
+            struct ghost *ptr = G->ghost + (sizeof(struct ghost) * i); // Points to i-th element of array G->ghost
+            ptr->pos    = UNK_POSITION ;
+            ptr->dir    = UNK_DIRECTION;
+            ptr->id     = i;
+            ptr->status = UNK_GHOST_STATUS;
         }
     }
     return G;
