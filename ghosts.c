@@ -7,6 +7,7 @@
 #include <time.h>
 #include "ghosts.h"
 #include "pacman.h"
+#include "pacman.c"
 #include "matrix.h"
 #include "global.h"
 #include "main.c"
@@ -15,13 +16,14 @@ static const struct position UNK_POSITION = {-1,-1}; // Set unknown position to 
 
 struct ghost { 
     int id;  //questo è l’id del fantasma 
-    int status; 
+    enum ghost_status status; 
     enum direction dir; 
     struct position pos; 
 }; 
 
 struct ghosts { 
     char **A; 
+    //char** path;
     unsigned int nrow; 
     unsigned int ncol; 
     unsigned int n; 
@@ -46,9 +48,9 @@ struct ghosts *ghosts_setup(unsigned int num_ghosts) {
                 struct position tmp1 = G->ghost[i].pos; //tmp1 assume la posizione del fantasma
                 struct position tmp =  {rand() % G->nrow,rand() % G->ncol}; //tmp assume due coordinate casuali
                 if (!(IS_WALL(G->A,tmp) && IS_PACMAN(G->A,tmp) && IS_GHOST(G->A,tmp))){ //confronto le coordinate casuali con delle define prodotte in global.h
-                 G->ghost[i].pos.i = tmp.i; //se le coordinate sono libere asseggno le coordinate al fantasma
-                 G->ghost[i].pos.j = tmp.j;
-                 l=0; //termina il ciclo    
+                    G->ghost[i].pos.i = tmp.i; //se le coordinate sono libere asseggno le coordinate al fantasma
+                    G->ghost[i].pos.j = tmp.j;
+                    l=0; //termina il ciclo    
                 }
             }
             
@@ -86,29 +88,72 @@ void ghosts_set_position(struct ghosts *G, unsigned int id, struct position pos)
 
 /* Set the status of the ghost id. */
 void ghosts_set_status(struct ghosts *G, unsigned int id, enum ghost_status status) {
+    if(G != NULL) G->ghost[id].status = status;
     return;
 }
 
 /* Return the number of ghosts */
 unsigned int ghosts_get_number(struct ghosts *G) {
-    return 0;
+    if(G != NULL) {
+        unsigned int numGhost = G->n;
+    return numGhost;
+    }
 }
 
 /* Return the position of the ghost id. */
 struct position ghosts_get_position(struct ghosts *G, unsigned int id) {
     struct position p; 
+    if(G != NULL && id < G->n)   p= G->ghost[id].pos;
+                            else p = UNK_POSITION;
     return p;
 
 }
 
 /* Return the status of the ghost id. */
 enum ghost_status ghosts_get_status(struct ghosts *G, unsigned int id) {
-    return 0;
+    enum ghost_status stat;
+    if(G != NULL && id < G->n)   stat = G->ghost[id].status;
+                            else stat = UNK_GHOST_STATUS;
+    return stat;
+}
+
+static int legal_position(struct ghosts *G, struct pacman*P, struct position pos, enum ghost_status status) { 
+    if(IS_WALL(G->A,pos) || IS_GHOST(G->A,pos))  return 0;  
+    else { 
+        //unsigned int i;
+        //struct position p = pacman_get_position(P); 
+        //check pacmanintersect … 
+        //check ghost intersect … 
+    }
+    return 1; 
 }
 
 /* Move the ghost id (according to its status). Returns the new position */
 struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id) {
-    struct position p; 
+    struct position p;
+    if(P && G && UNK_GHOST_STATUS) return p = UNK_POSITION;
+    unsigned int pacPi,pacPj,ghostPi,ghostPj;
+    pacPi = P->pos.i;
+    pacPj = P->pos.j;
+    ghostPi = G->ghost[id].pos.i;
+    ghostPj = G->ghost[id].pos.j;
+
+    switch (G->ghost[id].status){
+        case NORMAL:
+            
+            break;
+        case SCARED_NORMAL:
+            /* code */
+            break;
+        case SCARED_BLINKING:
+            /* code */
+            break;
+        case EYES:
+            /* code */
+            break;
+        default:
+            break;
+    }
     return p;
 }
 
