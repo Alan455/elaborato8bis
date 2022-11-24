@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <malloc.h>
 #include <time.h>
 #include "ghosts.h"
 #include "pacman.h"
@@ -11,8 +12,6 @@
 #include "matrix.h"
 #include "global.h"
 #include "main.c"
-
-static const struct position UNK_POSITION = {-1,-1}; // Set unknown position to (UINT_MAX,UINT_MAX)
 
 struct ghost { 
     int id;  //questo è l’id del fantasma 
@@ -62,9 +61,9 @@ struct ghosts *ghosts_setup(unsigned int num_ghosts) {
 /* Destroy the ghost data structure */
 void ghosts_destroy(struct ghosts *G) {
     if (G != NULL){
-        int i;
+        /*int i;
         for (i=0;i<G->n;i++)
-            free(G->ghost[i].id);
+            free(G->ghost[i]);*/
         free(G);
     }
 return;
