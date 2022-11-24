@@ -118,41 +118,127 @@ enum ghost_status ghosts_get_status(struct ghosts *G, unsigned int id) {
 }
 
 static int legal_position(struct ghosts *G, struct pacman*P, struct position pos, enum ghost_status status) { 
-    if(IS_WALL(G->A,pos) || IS_GHOST(G->A,pos))  return 0;  
+    
+    switch (status){
+        case NORMAL:
+            if(IS_WALL(G->A,pos) || IS_GHOST(G->A,pos))  return 1; break;
+        default:
+            if(IS_WALL(G->A,pos) || IS_GHOST(G->A,pos) || IS_PACMAN(G->A,pos))  return 1; break;
+    }
+     
     /*else { 
         //unsigned int i;
         //struct position p = pacman_get_position(P); 
         //check pacmanintersect … 
         //check ghost intersect … 
     }*/
-    return 1; 
+    return 0; 
+}
+static struct position follow(struct ghosts *G,struct pacman *P, unsigned int id){
+    enum direction dir;
+    struct position pacP,ghostP;
+    pacP.i = P->pos.i;
+    pacP.j = P->pos.j;
+    ghostP.i = G->ghost[id].pos.i;
+    ghostP.j= G->ghost[id].pos.j;
+
+    if(pacP.i > ghostP.i){
+        dir = RIGHT;
+        ghostP.i++;
+        if (legal_position(G,P,ghostP,G->ghost[id].status)) G->ghost[id].pos = ghostP;
+        return ghostP;
+    } else if (pacP.i < ghostP.i) {
+        dir = LEFT;
+        ghostP.i--;
+        if (legal_position(G,P,ghostP,G->ghost[id].status)) G->ghost[id].pos = ghostP;
+        return ghostP;
+    } else if (pacP.j > ghostP.j){
+        dir = DOWN;
+        ghostP.j++;
+        if (legal_position(G,P,ghostP,G->ghost[id].status))  G->ghost[id].pos = ghostP;
+        return ghostP;
+    } else if (pacP.j < ghostP.j){
+        dir = UP;
+        ghostP.j--;
+        if (legal_position(G,P,ghostP,G->ghost[id].status))  G->ghost[id].pos = ghostP;
+        return ghostP;
+    }
+    dir = UNK_DIRECTION;
+    return ghostP;    
+}
+static struct position escape(struct ghosts *G,struct pacman *P, unsigned int id){
+    enum direction dir;
+    struct position pacP,ghostP;
+    pacP.i = P->pos.i;
+    pacP.j = P->pos.j;
+    ghostP.i = G->ghost[id].pos.i;
+    ghostP.j= G->ghost[id].pos.j;
+
+    if(pacP.i > ghostP.i){
+        dir = LEFT;
+        ghostP.i--;
+        if (legal_position(G,P,ghostP,G->ghost[id].status)) G->ghost[id].pos = ghostP;
+        return ghostP;
+    } else if (pacP.i < ghostP.i) {
+        dir = RIGHT;
+        ghostP.i++;
+        if (legal_position(G,P,ghostP,G->ghost[id].status)) G->ghost[id].pos = ghostP;
+        return ghostP;
+    } else if (pacP.j > ghostP.j){
+        dir = UP;
+        ghostP.j--;
+        if (legal_position(G,P,ghostP,G->ghost[id].status))  G->ghost[id].pos = ghostP;
+        return ghostP;
+    } else if (pacP.j < ghostP.j){
+        dir = DOWN;
+        ghostP.j++;
+        if (legal_position(G,P,ghostP,G->ghost[id].status))  G->ghost[id].pos = ghostP;
+        return ghostP;
+    }
+    dir = UNK_DIRECTION;
+    return ghostP;    
+}
+static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int id){
+ char **arena = G->A;
+ struct position ghostP;
+ char dir = arena[ghostP.i][ghostP.j];
+    switch (dir){
+        case 'U':
+            G->ghost[id].pos.j--;
+        break;
+        case 'D':
+            G->ghost[id].pos.j++;
+        break;
+        case 'R':
+            G->ghost[id].pos.i++;
+        break;
+        case 'L':
+            G->ghost[id].pos.i--;
+        break;
+        default: UNK_POSITION;
+        break;
+    }
+    return G->ghost[id].pos;
 }
 
 /* Move the ghost id (according to its status). Returns the new position */
 struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id) {
     struct position p;
+    enum direction dir;
     if(P && G && UNK_GHOST_STATUS) return p = UNK_POSITION;
-    unsigned int pacPi,pacPj,ghostPi,ghostPj;
-    pacPi = P->pos.i;
-    pacPj = P->pos.j;
-    ghostPi = G->ghost[id].pos.i;
-    ghostPj = G->ghost[id].pos.j;
-
     switch (G->ghost[id].status){
-        case NORMAL:
-            
-            break;
-        case SCARED_NORMAL:
-            /* code */
-            break;
+        //Se lo stato del fanstama `e NORMAL, lo spostamento in una cella pu`o essere effettuato solo se tale cella `e libera: 
+        //*la cella non `e occupata da un altro fantasma ∗ la cella non `e occupata da un muro
+        case NORMAL: 
+                p = follow(G,P,id); break;
+        case SCARED_NORMAL:                   //Se lo stato del fantasma non `e NORMAL, 
+                p = escape(G,P,id); break;    //lo spostamento non pu`o essere effettuato in una cella occupata da un muro, da un altro fantasma e da pacman.
         case SCARED_BLINKING:
-            /* code */
-            break;
+                p = escape(G,P,id); break;
         case EYES:
-            /* code */
-            break;
+                p = wayhome(G,P,id);break;
         default:
-            break;
+                p = UNK_POSITION;   break;
     }
     return p;
 }
