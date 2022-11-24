@@ -8,12 +8,15 @@
 #include "ghosts.h"
 #include "pacman.h"
 #include "matrix.h"
+#include "global.h"
+#include "main.c"
 
 static const struct position UNK_POSITION = {-1,-1}; // Set unknown position to (UINT_MAX,UINT_MAX)
+
 struct ghost { 
     int id;  //questo è l’id del fantasma 
     int status; 
-    int dir; 
+    enum direction dir; 
     struct position pos; 
 }; 
 
@@ -25,20 +28,30 @@ struct ghosts {
     struct ghost *ghost; 
 };
 
-
 /* Create the ghosts data structure */
 struct ghosts *ghosts_setup(unsigned int num_ghosts) { 
     struct ghosts *G = (struct ghosts *)malloc(sizeof(struct ghosts));
-    //srand(time(NULL));
+    srand(time(NULL));
     if(G != NULL) {  //se G non punta a NULL
         unsigned int i;
         G->n = num_ghosts;  // al campo n di G assegniamo num_ghosts
         G->ghost = (struct ghost *)calloc(num_ghosts,sizeof(struct ghost)); //al campo ghost di G assegniamo dinamicamente la memoria
-        for(i = 0; i < G->n; i++) {                     //per ogni ghost presente assegniamo una UNK_POSITION e una direzione casuale
-            G->ghost[i].id = i;
-            G->ghost[i].dir   = UNK_DIRECTION ;
-            G->ghost[i].status = UNK_GHOST_STATUS;
-            G->ghost[i].pos = UNK_POSITION;
+        for(i = 0; i < G->n; i++) { //per ogni ghost presente assegniamo una UNK_POSITION e una direzione casuale
+            G->ghost[i].id = i;     //id per il fantasma
+            G->A = A->arena;         //nel char di arena inserisco il arena.txt preso da main.c
+            G->ghost[i].dir = rand() % 3;   //random da zero a 3
+            G->ghost[i].status = UNK_GHOST_STATUS;  //status sconosciuto preso da una enum
+            int l=1; // fa andare il ciclo
+            while(l){
+                struct position tmp1 = G->ghost[i].pos; //tmp1 assume la posizione del fantasma
+                struct position tmp =  {rand() % G->nrow,rand() % G->ncol}; //tmp assume due coordinate casuali
+                if (!(IS_WALL(G->A,tmp) && IS_PACMAN(G->A,tmp) && IS_GHOST(G->A,tmp))){ //confronto le coordinate casuali con delle define prodotte in global.h
+                 G->ghost[i].pos.i = tmp.i; //se le coordinate sono libere asseggno le coordinate al fantasma
+                 G->ghost[i].pos.j = tmp.j;
+                 l=0; //termina il ciclo    
+                }
+            }
+            
         }
     }
     return G;
@@ -49,7 +62,7 @@ void ghosts_destroy(struct ghosts *G) {
     if (G != NULL){
         int i;
         for (i=0;i<G->n;i++)
-            free(G->ghost[i]);
+            free(G->ghost[i].id);
         free(G);
     }
 return;
@@ -57,11 +70,17 @@ return;
 
 /* Set the arena (A) matrix */
 void ghosts_set_arena(struct ghosts *G, char **A, unsigned int nrow,unsigned int ncol) {
+    if (G != NULL) {
+        G->A = A;
+        G->ncol = ncol;
+        G->nrow = nrow;
+    }
     return;                                                      
 }
 
 /* Set the position of the ghost with that id. */
 void ghosts_set_position(struct ghosts *G, unsigned int id, struct position pos) {
+    if(G != NULL && id < G->n) G->ghost[id].pos = pos; // se G non punta a  NULLe il suo identificativo è valido assegniamo al fantasma con quell’id la posizione
     return;
 }
 
