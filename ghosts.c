@@ -119,12 +119,12 @@ enum ghost_status ghosts_get_status(struct ghosts *G, unsigned int id) {
 
 static int legal_position(struct ghosts *G, struct pacman*P, struct position pos, enum ghost_status status) { 
     if(IS_WALL(G->A,pos) || IS_GHOST(G->A,pos))  return 0;  
-    else { 
+    /*else { 
         //unsigned int i;
         //struct position p = pacman_get_position(P); 
         //check pacmanintersect … 
         //check ghost intersect … 
-    }
+    }*/
     return 1; 
 }
 
