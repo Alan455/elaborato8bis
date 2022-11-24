@@ -4,14 +4,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <malloc.h>
 #include <time.h>
 #include "ghosts.h"
 #include "pacman.h"
-#include "pacman.c"
 #include "matrix.h"
-#include "global.h"
-#include "main.c"
 
 struct ghost { 
     int id;  //questo è l’id del fantasma 
@@ -222,9 +218,9 @@ static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int i
 
 /* Move the ghost id (according to its status). Returns the new position */
 struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id) {
-    struct position p;
+    struct position p = {-1,-1};
     enum direction dir;
-    if(P && G && UNK_GHOST_STATUS) return p = UNK_POSITION;
+    if(P && G && UNK_GHOST_STATUS) return p;
     switch (G->ghost[id].status){
         //Se lo stato del fanstama `e NORMAL, lo spostamento in una cella pu`o essere effettuato solo se tale cella `e libera: 
         //*la cella non `e occupata da un altro fantasma ∗ la cella non `e occupata da un muro
