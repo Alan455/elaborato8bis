@@ -26,6 +26,7 @@ struct ghosts {
     struct ghost *ghost; 
 };
 
+
 /* Create the ghosts data structure */
 struct ghosts *ghosts_setup(unsigned int num_ghosts) { 
     struct ghosts *G = (struct ghosts *)malloc(sizeof(struct ghosts));
@@ -37,18 +38,8 @@ struct ghosts *ghosts_setup(unsigned int num_ghosts) {
             G->ghost[i].id = i;                                              //id per il fantasma
             G->ghost[i].dir = LEFT;
             G->ghost[i].status = UNK_GHOST_STATUS;  //status sconosciuto preso da una enum
-            int l=1; // fa andare il ciclo
-            while(l){
-                srand(time(NULL));
-                struct position tmp1 = G->ghost[i].pos;                     //tmp1 assume la posizione del fantasma
-                struct position tmp =  {rand() % G->nrow,rand() % G->ncol}; //tmp assume due coordinate casuali
-                if (!(IS_WALL(G->A,tmp) && IS_PACMAN(G->A,tmp) && IS_GHOST(G->A,tmp))){ //confronto le coordinate casuali con delle define prodotte in global.h
-                    G->ghost[i].pos.i = tmp.i; //se le coordinate sono libere asseggno le coordinate al fantasma
-                    G->ghost[i].pos.j = tmp.j;
-                    l=0; //termina il ciclo    
-                }
-            }
-            
+            G->ghost[i].pos.i = -1; //se le coordinate sono libere asseggno le coordinate al fantasma
+            G->ghost[i].pos.j = -1;
         }
     }
     return G;
