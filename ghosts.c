@@ -29,19 +29,18 @@ struct ghosts {
 /* Create the ghosts data structure */
 struct ghosts *ghosts_setup(unsigned int num_ghosts) { 
     struct ghosts *G = (struct ghosts *)malloc(sizeof(struct ghosts));
-    srand(time(NULL));
     if(G != NULL) {  //se G non punta a NULL
         unsigned int i;
-        G->n = num_ghosts;  // al campo n di G assegniamo num_ghosts
+        G->n = num_ghosts;                                                   // al campo n di G assegniamo num_ghosts
         G->ghost = (struct ghost *)calloc(num_ghosts,sizeof(struct ghost)); //al campo ghost di G assegniamo dinamicamente la memoria
-        for(i = 0; i < G->n; i++) { //per ogni ghost presente assegniamo una UNK_POSITION e una direzione casuale
-            G->ghost[i].id = i;     //id per il fantasma
-             //nel char di arena inserisco il arena.txt preso da main.c
-            G->ghost[i].dir = rand() % 3;   //random da zero a 3
+        for(i = 0; i < G->n; i++) {                                         //per ogni ghost presente assegniamo una UNK_POSITION e una direzione casuale
+            G->ghost[i].id = i;                                              //id per il fantasma
+            G->ghost[i].dir = LEFT;
             G->ghost[i].status = UNK_GHOST_STATUS;  //status sconosciuto preso da una enum
             int l=1; // fa andare il ciclo
             while(l){
-                struct position tmp1 = G->ghost[i].pos; //tmp1 assume la posizione del fantasma
+                srand(time(NULL));
+                struct position tmp1 = G->ghost[i].pos;                     //tmp1 assume la posizione del fantasma
                 struct position tmp =  {rand() % G->nrow,rand() % G->ncol}; //tmp assume due coordinate casuali
                 if (!(IS_WALL(G->A,tmp) && IS_PACMAN(G->A,tmp) && IS_GHOST(G->A,tmp))){ //confronto le coordinate casuali con delle define prodotte in global.h
                     G->ghost[i].pos.i = tmp.i; //se le coordinate sono libere asseggno le coordinate al fantasma
@@ -68,13 +67,13 @@ return;
 
 /* Set the arena (A) matrix */
 void ghosts_set_arena(struct ghosts *G, char **A, unsigned int nrow,unsigned int ncol) {
-    char** M = NULL;
+    /*char** M = NULL;
+    M = matrix_alloc(*nrow, *ncol);*/
     unsigned int *NewRow = &nrow,*NewCol = &ncol;
     if (G != NULL) {
-        M = matrix_read(**A,NewRow,NewCol);
         G->ncol = ncol;
         G->nrow = nrow;
-        G->A = M;
+        matrix_read(*A,NewRow,NewCol);;
     }
     return;                                                      
 }
@@ -137,8 +136,9 @@ static int legal_position(struct ghosts *G, struct pacman*P, struct position pos
 static struct position follow(struct ghosts *G,struct pacman *P, unsigned int id){
     enum direction dir;
     struct position pacP,ghostP;
-    pacP.i = P->pos.i;
-    pacP.j = P->pos.j;
+    pacP = pacman_get_position(P);
+    /*pacP.i = 
+    pacP.j = P->pos.j;*/
     ghostP.i = G->ghost[id].pos.i;
     ghostP.j= G->ghost[id].pos.j;
 
@@ -169,8 +169,9 @@ static struct position follow(struct ghosts *G,struct pacman *P, unsigned int id
 static struct position escape(struct ghosts *G,struct pacman *P, unsigned int id){
     enum direction dir;
     struct position pacP,ghostP;
-    pacP.i = P->pos.i;
-    pacP.j = P->pos.j;
+    pacP = pacman_get_position(P);
+    /*pacP.i = P->pos.i;
+    pacP.j = P->pos.j;*/
     ghostP.i = G->ghost[id].pos.i;
     ghostP.j= G->ghost[id].pos.j;
 
@@ -216,8 +217,8 @@ static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int i
             G->ghost[id].pos.i--;
         break;
         default: 
-            G.ghost[id].pos.i = -1;
-            G.ghost[id].pos.j = -1;
+            G->ghost[id].pos.i = -1;
+            G->ghost[id].pos.j = -1;
         break;
     }
     return G->ghost[id].pos;
@@ -240,7 +241,9 @@ struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id)
         case EYES:
                 p = wayhome(G,P,id);break;
         default:
-                p = UNK_POSITION;   break;
+                p.i = -1;
+                p.j = -1;
+                break;
     }
     return p;
 }
