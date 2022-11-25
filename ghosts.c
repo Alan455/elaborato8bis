@@ -8,7 +8,6 @@
 #include "ghosts.h"
 #include "pacman.h"
 #include "matrix.h"
-#include "global.h"
 
 struct ghost { 
     int id;  //questo è l’id del fantasma 
@@ -18,14 +17,12 @@ struct ghost {
 }; 
 
 struct ghosts { 
-    char **A; 
-    //char** path;
+    char **A;
     unsigned int nrow; 
     unsigned int ncol; 
     unsigned int n; 
     struct ghost *ghost; 
 };
-
 
 /* Create the ghosts data structure */
 struct ghosts *ghosts_setup(unsigned int num_ghosts) { 
@@ -64,7 +61,7 @@ void ghosts_set_arena(struct ghosts *G, char **A, unsigned int nrow,unsigned int
     if (G != NULL) {
         G->ncol = ncol;
         G->nrow = nrow;
-        matrix_read(*A,NewRow,NewCol);;
+        G->A = A;
     }
     return;                                                      
 }
@@ -161,11 +158,8 @@ static struct position escape(struct ghosts *G,struct pacman *P, unsigned int id
     enum direction dir;
     struct position pacP,ghostP;
     pacP = pacman_get_position(P);
-    /*pacP.i = P->pos.i;
-    pacP.j = P->pos.j;*/
     ghostP.i = G->ghost[id].pos.i;
     ghostP.j= G->ghost[id].pos.j;
-
     if(pacP.i > ghostP.i){
         dir = LEFT;
         ghostP.i--;
@@ -191,9 +185,12 @@ static struct position escape(struct ghosts *G,struct pacman *P, unsigned int id
     return ghostP;    
 }
 static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int id){
- char **arena = G->A;
- struct position ghostP;
- char dir = arena[ghostP.i][ghostP.j];
+ struct position;
+ unsigned int ghostPi,ghostPj;
+ ghostPi = G->ghost[id].pos.i;
+ ghostPj = G->ghost[id].pos.j;
+ char dir = G->A[ghostPi][ghostPj];
+ printf("Di qui passa il Test ghost case 2) Nella cella >%d:%d< c'è: >%c<",ghostPi,ghostPj,dir);
     switch (dir){
         case 'U':
             G->ghost[id].pos.j--;
@@ -219,8 +216,11 @@ static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int i
 struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id) {
     struct position p = {-1,-1};
     enum direction dir;
-    if(P && G && UNK_GHOST_STATUS) return p;
-    switch (G->ghost[id].status){
+    enum ghost_status status;
+    status = ghosts_get_status(G,id);
+    //printf("Non sono entrato nel case di position ghosts_move\n");
+    switch (status){
+        DEFAULT: printf("Sono entrato nel case di position ghosts_move");
         //Se lo stato del fanstama `e NORMAL, lo spostamento in una cella pu`o essere effettuato solo se tale cella `e libera: 
         //*la cella non `e occupata da un altro fantasma ∗ la cella non `e occupata da un muro
         case NORMAL: 
@@ -231,10 +231,7 @@ struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id)
                 p = escape(G,P,id); break;
         case EYES:
                 p = wayhome(G,P,id);break;
-        default:
-                p.i = -1;
-                p.j = -1;
-                break;
+
     }
     return p;
 }
