@@ -3,5 +3,10 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"files.associations": {
+			"es2": "c"
+		}
+	}
 }

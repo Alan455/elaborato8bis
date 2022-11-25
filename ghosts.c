@@ -8,6 +8,7 @@
 #include "ghosts.h"
 #include "pacman.h"
 #include "matrix.h"
+#include "global.h"
 
 struct ghost { 
     int id;  //questo è l’id del fantasma 
@@ -35,7 +36,7 @@ struct ghosts *ghosts_setup(unsigned int num_ghosts) {
         G->ghost = (struct ghost *)calloc(num_ghosts,sizeof(struct ghost)); //al campo ghost di G assegniamo dinamicamente la memoria
         for(i = 0; i < G->n; i++) { //per ogni ghost presente assegniamo una UNK_POSITION e una direzione casuale
             G->ghost[i].id = i;     //id per il fantasma
-            G->A = A->arena;         //nel char di arena inserisco il arena.txt preso da main.c
+             //nel char di arena inserisco il arena.txt preso da main.c
             G->ghost[i].dir = rand() % 3;   //random da zero a 3
             G->ghost[i].status = UNK_GHOST_STATUS;  //status sconosciuto preso da una enum
             int l=1; // fa andare il ciclo
@@ -68,7 +69,7 @@ return;
 /* Set the arena (A) matrix */
 void ghosts_set_arena(struct ghosts *G, char **A, unsigned int nrow,unsigned int ncol) {
     if (G != NULL) {
-        G->A = A;
+        G->A = matrix_read(**a,nrow,ncol);
         G->ncol = ncol;
         G->nrow = nrow;
     }
@@ -210,7 +211,7 @@ static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int i
         case 'L':
             G->ghost[id].pos.i--;
         break;
-        default: UNK_POSITION;
+        default: G.ghost[id].pos = {-1,-1};
         break;
     }
     return G->ghost[id].pos;
