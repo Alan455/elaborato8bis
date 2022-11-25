@@ -68,13 +68,17 @@ return;
 
 /* Set the arena (A) matrix */
 void ghosts_set_arena(struct ghosts *G, char **A, unsigned int nrow,unsigned int ncol) {
+    char** M = NULL;
+    unsigned int *NewRow = &nrow,*NewCol = &ncol;
     if (G != NULL) {
-        G->A = matrix_read(**a,nrow,ncol);
+        M = matrix_read(**A,NewRow,NewCol);
         G->ncol = ncol;
         G->nrow = nrow;
+        G->A = M;
     }
     return;                                                      
 }
+
 
 /* Set the position of the ghost with that id. */
 void ghosts_set_position(struct ghosts *G, unsigned int id, struct position pos) {
@@ -90,7 +94,7 @@ void ghosts_set_status(struct ghosts *G, unsigned int id, enum ghost_status stat
 
 /* Return the number of ghosts */
 unsigned int ghosts_get_number(struct ghosts *G) {
-    if(G != NULL && id < G->n) {
+    if(G != NULL) {
         unsigned int numGhost = G->n;
     return numGhost;
     }
@@ -100,7 +104,7 @@ unsigned int ghosts_get_number(struct ghosts *G) {
 struct position ghosts_get_position(struct ghosts *G, unsigned int id) {
     struct position p; 
     if(G != NULL && id < G->n)   p= G->ghost[id].pos;
-                            else p = UNK_POSITION;
+                            else {p.i = -1; p.j = -1;}
     return p;
 
 }
@@ -211,7 +215,9 @@ static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int i
         case 'L':
             G->ghost[id].pos.i--;
         break;
-        default: G.ghost[id].pos = {-1,-1};
+        default: 
+            G.ghost[id].pos.i = -1;
+            G.ghost[id].pos.j = -1;
         break;
     }
     return G->ghost[id].pos;
