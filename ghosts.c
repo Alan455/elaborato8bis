@@ -83,13 +83,13 @@ void ghosts_set_position(struct ghosts *G, unsigned int id, struct position pos)
 
 /* Set the status of the ghost id. */
 void ghosts_set_status(struct ghosts *G, unsigned int id, enum ghost_status status) {
-    if(G != NULL) G->ghost[id].status = status;
+    if(G != NULL && id < G->n) G->ghost[id].status = status;
     return;
 }
 
 /* Return the number of ghosts */
 unsigned int ghosts_get_number(struct ghosts *G) {
-    if(G != NULL) {
+    if(G != NULL && id < G->n) {
         unsigned int numGhost = G->n;
     return numGhost;
     }
