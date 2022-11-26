@@ -29,10 +29,10 @@ struct ghosts *ghosts_setup(unsigned int num_ghosts) {
     struct ghosts *G = (struct ghosts *)malloc(sizeof(struct ghosts));
     if(G != NULL) {  //se G non punta a NULL
         unsigned int i;
-        G->n = num_ghosts;                                                   // al campo n di G assegniamo num_ghosts
-        G->ghost = (struct ghost *)calloc(num_ghosts,sizeof(struct ghost)); //al campo ghost di G assegniamo dinamicamente la memoria
-        for(i = 0; i < G->n; i++) {                                         //per ogni ghost presente assegniamo una UNK_POSITION e una direzione casuale
-            G->ghost[i].id = i;                                              //id per il fantasma
+        G->n = num_ghosts;
+        G->ghost = (struct ghost *)calloc(num_ghosts,sizeof(struct ghost));
+        for(i = 0; i < G->n; i++) {
+            G->ghost[i].id = i;                                         
             G->ghost[i].dir = LEFT;
             G->ghost[i].status = UNK_GHOST_STATUS;  //status sconosciuto preso da una enum
             G->ghost[i].pos.i = -1; //se le coordinate sono libere asseggno le coordinate al fantasma
@@ -55,15 +55,11 @@ return;
 
 /* Set the arena (A) matrix */
 void ghosts_set_arena(struct ghosts *G, char **A, unsigned int nrow,unsigned int ncol) {
-    /*char** M = NULL;
-    M = matrix_alloc(*nrow, *ncol);*/
-    unsigned int *NewRow = &nrow,*NewCol = &ncol;
     if (G != NULL) {
         G->ncol = ncol;
         G->nrow = nrow;
         G->A = A;
     }
-    return;                                                      
 }
 
 
@@ -107,6 +103,8 @@ enum ghost_status ghosts_get_status(struct ghosts *G, unsigned int id) {
 static int legal_position(struct ghosts *G, struct pacman*P, struct position pos, enum ghost_status status) { 
     switch (status){
         case NORMAL:
+            printf("STATUS NORMAL\n");
+            printf("%c\n",G->A[15]);
             if(IS_WALL(G->A,pos) || IS_GHOST(G->A,pos)) return 0; break;
         case SCARED_NORMAL:       
             if(IS_WALL(G->A,pos) || IS_GHOST(G->A,pos) || IS_PACMAN(G->A,pos)) return 0; break;
