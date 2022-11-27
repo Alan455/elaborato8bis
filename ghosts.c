@@ -49,8 +49,10 @@ struct ghosts *ghosts_setup(unsigned int num_ghosts) {
 /* Destroy the ghost data structure */
 void ghosts_destroy(struct ghosts *G) {
     if (G != NULL){
-        free(G->ghost); //libero la memoria puntata dal puntatore ghost
-        free(G); //libero la memoria puntata dal puntatore G
+        //libero la memoria puntata dal puntatore ghost
+        free(G->ghost); 
+        //libero la memoria puntata dal puntatore G
+        free(G); 
     }
 return;
 }
@@ -58,7 +60,9 @@ return;
 /* Set the arena (A) matrix */
 void ghosts_set_arena(struct ghosts *G, char **A, unsigned int nrow,unsigned int ncol) {
     if (G != NULL) {
+        //inserisco nel campo A di ghosts il puntatore che punta alla matrice dell'arena
         G->A = A;
+        //inizializzo i valori max di riga e colonna della matrice
         G->ncol = ncol;
         G->nrow = nrow; 
     }
@@ -103,6 +107,7 @@ enum ghost_status ghosts_get_status(struct ghosts *G, unsigned int id) {
 static int legal_movement(struct ghosts *G, struct pacman*P,struct position pos, enum direction dir, enum ghost_status status) {
     struct position tmpPos;
     int id = G->ghost->id;
+    
     tmpPos = pos;
     //questo switch modifica il valore del campo pos in base alla direzione indicata da dir
     switch (dir){           
@@ -113,15 +118,20 @@ static int legal_movement(struct ghosts *G, struct pacman*P,struct position pos,
         case UNK_DIRECTION: return 0; break;
         default: return 0;
     }
+    return legal_position(G,P,tmpPos,status);
+}
 
+//in base allo STATUS del ghost controllo se la posizione attuale in cui andiamo a mettere il ghost è legale, senza controllare eventuali direzioni di movimento
+static int legal_position(struct ghosts *G, struct pacman*P,struct position pos, enum ghost_status status) {
+    struct position tmpPos;
+    tmpPos = pos;
     switch (status){
-        // una volta impostata la nuova posizione proposta, controllo che siano verificate le condizioni necessarie in base allo status del GHOST
+        //Una volta impostata la nuova posizione proposta, controllo che siano verificate le condizioni necessarie in base allo status del GHOST
         //case NORMAL controllo che non sia un muro o che non sia un altro ghost
         //se tutte le condizioni sono FALSE esco dal ciclo senza fare il return 0 e faccio il return 1
         case NORMAL: 
             if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos)) return 0; break; 
-        
-        //negli altri casi aggiungo il controllo per il pacman  
+        //negli altri case aggiungo il controllo per il pacman  
         case SCARED_NORMAL:   
             if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos) || IS_PACMAN(G->A,tmpPos)) return 0; break; 
         case SCARED_BLINKING:
@@ -135,24 +145,7 @@ static int legal_movement(struct ghosts *G, struct pacman*P,struct position pos,
     return 1;
 }
 
-
-//in base allo STATUS del ghost controllo se la posizione attuale in cui andiamo a mettere il ghost è legale, senza controllare eventuali direzioni di movimento
-static int legal_position(struct ghosts *G, struct pacman*P,struct position pos, enum ghost_status status) {
-    struct position tmpPos;
-    tmpPos = pos;
-    switch (status){ 
-        case NORMAL:
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos)) return 0; break;
-        case SCARED_NORMAL:   
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos) || IS_PACMAN(G->A,tmpPos)) return 0; break;
-        case SCARED_BLINKING:
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos) || IS_PACMAN(G->A,tmpPos))  return 0; break;
-        case EYES:
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos) || IS_PACMAN(G->A,tmpPos))  return 0; break;
-    }
-    return 1;
-}
-//funzione che segue pacman
+//Funzione che segue pacman
 static struct position follow(struct ghosts *G,struct pacman *P, unsigned int id){
     enum direction dir;
     struct position pacP,ghostP;
