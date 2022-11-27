@@ -91,7 +91,7 @@ unsigned int ghosts_get_number(struct ghosts *G) {
 struct position ghosts_get_position(struct ghosts *G, unsigned int id) {
     struct position p; 
     if(G != NULL && id < G->n)   p= G->ghost[id].pos;
-                            else {p.i = -1; p.j = -1;}
+                            else p = UNK_POSITION;
     return p;
 
 }
