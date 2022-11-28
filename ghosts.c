@@ -102,12 +102,51 @@ enum ghost_status ghosts_get_status(struct ghosts *G, unsigned int id) {
     if(G != NULL && id < G->n)   stat = G->ghost[id].status;
     return stat;
 }
+//in base allo STATUS del ghost controllo se la posizione attuale in cui andiamo a mettere il ghost è legale, senza controllare eventuali direzioni di movimento
+static int legal_position(struct ghosts *G, struct pacman*P,struct position pos, enum ghost_status status, unsigned int id) {
+    struct position tmpPos,pacP;
+    tmpPos = pos;
+    int i;
+    pacP = pacman_get_position(P);
+    //printf("Pacman: >>%d:%d<<\n",pacP.i,pacP.j);
+    for (i = 0; i < G->n; i++){
+        //printf(">>%d:%d<<  \t",id,i);
+        //printf(">>%d:%d<<  \t",tmpPos.i,tmpPos.j);
+        //printf(">>%d:%d<<\n",G->ghost[i].pos.i,G->ghost[i].pos.j);
+        if ((i != id) && ((G->ghost[i].pos.i == tmpPos.i) && (G->ghost[i].pos.j == tmpPos.j))) {
+            //printf("Ho beccato un fantasma>>>>%d:%d<<<<>>>>%d:%d<<<<\n",G->ghost[i].pos.i,G->ghost[i].pos.j,tmpPos.i,tmpPos.j);
+            return 0; }
+    }
+    printf("%d\n",IS_WALL(G->A,tmpPos));
+    printf("%c\n",G->A[tmpPos.i][tmpPos.j]);
+    printf("%d:%d\n",tmpPos.i,tmpPos.j);
+    if (IS_WALL(G->A,tmpPos)) return 0;
+    if (status != NORMAL && (pacP.i == tmpPos.i) && (pacP.j == tmpPos.j)) {return 0; printf("Ho beccato pacman\n ");}
+    //se sono uscito dal ciclo senza fare il return 0, aggiorno la posizione del ghost è ritorno 1
+    G->ghost[id].pos = tmpPos; 
+    return 1;
+}
+static struct position position(struct ghosts *G, struct pacman*P,struct position pos, enum ghost_status status, unsigned int id) {
+    struct position tmpPos,pacP;
+    tmpPos = pos;
+    int i;
+    pacP = pacman_get_position(P);
+
+    for (i = 0; i < G->n; i++){
+        if ((i != id) && ((G->ghost[i].pos.i == tmpPos.i) && (G->ghost[i].pos.j == tmpPos.j))) {
+            return UNK_POSITION; }
+    }
+    if (IS_WALL(G->A,tmpPos)) return UNK_POSITION;
+    if (status != NORMAL && (pacP.i == tmpPos.i) && (pacP.j == tmpPos.j)) return UNK_POSITION;
+    //se sono uscito dal ciclo senza fare il return 0, aggiorno la posizione del ghost è ritorno 1
+    G->ghost[id].pos = tmpPos; 
+    return tmpPos;
+}
 
 //Controlla che i movimenti del ghost avvengano in posizioni idonee in base al suo stato
-static int legal_movement(struct ghosts *G, struct pacman*P,struct position pos, enum direction dir, enum ghost_status status) {
+static int legal_movement(struct ghosts *G, struct pacman*P,struct position pos, enum direction dir, enum ghost_status status,unsigned int id) {
+    //printf("LEGAL MOVEMENT\n");
     struct position tmpPos;
-    int id = G->ghost->id;
-    
     tmpPos = pos;
     //questo switch modifica il valore del campo pos in base alla direzione indicata da dir
     switch (dir){           
@@ -116,65 +155,50 @@ static int legal_movement(struct ghosts *G, struct pacman*P,struct position pos,
         case LEFT: tmpPos.j--; break; //se LEFT decremento il valore colonna
         case RIGHT: tmpPos.j++; break;
         case UNK_DIRECTION: return 0; break;
-        default: return 0;
+        default: printf("errore nella legal movement,non è stato assegnato una direzione");
+        return 0;
     }
-    return legal_position(G,P,tmpPos,status);
+
+    return legal_position(G,P,tmpPos,status,id);
 }
 
-//in base allo STATUS del ghost controllo se la posizione attuale in cui andiamo a mettere il ghost è legale, senza controllare eventuali direzioni di movimento
-static int legal_position(struct ghosts *G, struct pacman*P,struct position pos, enum ghost_status status) {
-    struct position tmpPos;
-    tmpPos = pos;
-    switch (status){
-        //Una volta impostata la nuova posizione proposta, controllo che siano verificate le condizioni necessarie in base allo status del GHOST
-        //case NORMAL controllo che non sia un muro o che non sia un altro ghost
-        //se tutte le condizioni sono FALSE esco dal ciclo senza fare il return 0 e faccio il return 1
-        case NORMAL: 
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos)) return 0; break; 
-        //negli altri case aggiungo il controllo per il pacman  
-        case SCARED_NORMAL:   
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos) || IS_PACMAN(G->A,tmpPos)) return 0; break; 
-        case SCARED_BLINKING:
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos) || IS_PACMAN(G->A,tmpPos))  return 0; break;
-        case EYES:
-            if(IS_WALL(G->A,tmpPos) || IS_GHOST(G->A,tmpPos) || IS_PACMAN(G->A,tmpPos))  return 0; break;
-        case UNK_GHOST_STATUS: break;
-    }
-    //se sono uscito dal ciclo senza fare il return 0, aggiorno la posizione del ghost è ritorno 1
-    G->ghost[id].pos = tmpPos; 
-    return 1;
-}
 
 //Funzione che segue pacman
 static struct position follow(struct ghosts *G,struct pacman *P, unsigned int id){
     enum direction dir;
     struct position pacP,ghostP;
     pacP = pacman_get_position(P);
-    ghostP.i = G->ghost[id].pos.i;
-    ghostP.j= G->ghost[id].pos.j;
+    ghostP = G->ghost[id].pos;
+    enum ghost_status status = G->ghost[id].status; 
+    //printf("STATUS NORMAL\n");
     //quattro if consecutivi, uno per ogni direzione assumibile dal ghost
     //controlla se pacman è a destra del ghost
     if(pacP.j > ghostP.j){
         //se è vero viene settata la direzione RIGHT
         dir = RIGHT; 
+        //printf("dir right\n");
         //controlla se nella cella in cui si vuole muovere sono verificate le condizioni necessarie
-        if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))
-        return G->ghost[id].pos;//in caso positivo ritorna la nuova posizione del ghost
+        //in caso positivo ritorna la nuova posizione del ghost
+        if (legal_movement(G,P,ghostP,dir,status,id)) return G->ghost[id].pos;
     }                                                                                   
     if (pacP.j < ghostP.j) {
         dir = LEFT;
-         if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))return G->ghost[id].pos;
+        //printf("dir left\n");
+         if (legal_movement(G,P,ghostP,dir,status,id))return G->ghost[id].pos;
     } 
     if (pacP.i > ghostP.i){
         dir = DOWN;
-         if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))return G->ghost[id].pos;
+        //printf("dir down\n");
+         if (legal_movement(G,P,ghostP,dir,status,id))return G->ghost[id].pos;
     } 
     if (pacP.i < ghostP.i){
         dir = UP;
-         if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))return G->ghost[id].pos;
+        //printf("dir up\n");
+         if (legal_movement(G,P,ghostP,dir,status,id))return G->ghost[id].pos;
      }
+    //printf("USCITO DA NORMAL\n");
     //se non è disponibile nessuna direzione valida ritorna la posizione attuale
-    return ghostP;
+    return G->ghost[id].pos;
 }
 
 
@@ -185,52 +209,83 @@ static struct position escape(struct ghosts *G,struct pacman *P, unsigned int id
     pacP = pacman_get_position(P);
     ghostP.i = G->ghost[id].pos.i;
     ghostP.j= G->ghost[id].pos.j;
+    //printf("STATUS ESCAPE\n");
     if(pacP.j > ghostP.j){
         dir = LEFT;
-         if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))return G->ghost[id].pos;
+        //printf("LEFT\n");
+        //printf("Eg: >>%d:%d<<\n",ghostP.i,ghostP.j);
+        if (legal_movement(G,P,ghostP,dir,G->ghost[id].status,id))return G->ghost[id].pos;
     } else if (pacP.j < ghostP.j) {
         dir = RIGHT;
-        if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))return G->ghost[id].pos;
+        //printf("RIGHT\n");
+        if (legal_movement(G,P,ghostP,dir,G->ghost[id].status,id))return G->ghost[id].pos;
     } else if (pacP.i > ghostP.i){
         dir = UP;
-         if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))return G->ghost[id].pos;
+        //printf("UP\n");
+         if (legal_movement(G,P,ghostP,dir,G->ghost[id].status,id))return G->ghost[id].pos;
     } else if (pacP.i < ghostP.i){
         dir = DOWN;
-        if (legal_movement(G,P,ghostP,dir,G->ghost[id].status))return G->ghost[id].pos;
+        //printf("DOWN\n");
+        if (legal_movement(G,P,ghostP,dir,G->ghost[id].status,id))return G->ghost[id].pos;
     }
     //se non è disponibile nessuna direzione valida ritorna la posizione attuale
-    return ghostP;    
+    return G->ghost[id].pos;  
 }
 
 //funzione per ritrovare casa
 static struct position wayhome(struct ghosts *G,struct pacman *P, unsigned int id){
-    struct position;
+    struct position ghostP;
+    enum direction dir;
+    enum ghost_status status;
     unsigned int ghostPi,ghostPj;
+    status = G->ghost[id].status;
     ghostPi = G->ghost[id].pos.i;
     ghostPj = G->ghost[id].pos.j;
+    //printf("STATUS WAYHOME\n");
+    //printf("%c >>>%d:%d<<<\n",G->A[ghostPi][ghostPj],ghostPi,ghostPj);
     //lo switch prende come parametro il valore della cella di A alle coordinate attuali del ghost
     switch (G->A[ghostPi][ghostPj]){ 
         case 'U':
             //modifica la nuova posizione in base al valore della cella
             //nel casu 'U' decrementa di uno l'indicatore di riga
-            G->ghost[id].pos.i--;
-            G->ghost[id].dir = UP;
+            dir = UP;
+            //ghostP.i--;
+            //printf("Direzione UP, pos:  >>>%d:%d<<<\n ",ghostPi,ghostPj);
+            if ((legal_movement(G,P,ghostP,dir,status,id))){
+                //G->ghost[id].pos.i--;
+                return  G->ghost[id].pos;
+            }
         break;
         case 'D':
-            G->ghost[id].pos.i++;
-            G->ghost[id].dir = DOWN;
+            dir = DOWN;
+            //ghostP.i++;
+            //printf("Direzione DOWN, pos:  >>>%d:%d<<<\n ",ghostPi,ghostPj);
+            if ((legal_movement(G,P,ghostP,dir,status,id))){
+                //G->ghost[id].pos.i++;
+                return  G->ghost[id].pos;
+            }
         break;
         case 'R':
-            G->ghost[id].pos.j++;
-            G->ghost[id].dir = RIGHT;
+            dir = RIGHT;
+            //ghostP.j++;
+            //printf("Direzione RIGHT, pos:  >>>%d:%d<<<\n ",ghostPi,ghostPj);
+            if ((legal_movement(G,P,ghostP,dir,status,id))){
+                //G->ghost[id].pos.j++;
+                return  G->ghost[id].pos;
+            }
         break;
         case 'L':
-            G->ghost[id].pos.j--;
-            G->ghost[id].dir = RIGHT;
+            dir = LEFT;
+            //ghostP.j--;
+            //printf("Direzione LEFT, pos:  >>>%d:%d<<<\n ",ghostPi,ghostPj);
+            if ((legal_movement(G,P,ghostP,dir,status,id))){
+                //G->ghost[id].pos.j--;
+                return  G->ghost[id].pos;
+            }
         break;
         //se è arrivato a casa
         case HOME_SYM: 
-            G->ghost[id].dir = UNK_DIRECTION;   //direzione sconosciuta
+            //G->ghost[id].dir = UP;   //direzione sconosciuta
             G->ghost[id].status = NORMAL;   //status normal
         break;
     }
@@ -247,7 +302,9 @@ struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id)
     //variabile status assume lo status del ghost
     status = G->ghost[id].status; 
     //se la funzione legal position ritorna 1 come valore, vuol dire che la posizione attuale del ghost è accettabile e posso entrare nello switch
-    if(legal_position(G,P,pos,status)) { 
+    //printf("GHOSTMOVE\n");
+    //printf("G: >>%d:%d<<\n",pos.i,pos.j);
+    if((position(G,P,pos,status,id).i > -1)) { 
         switch (status){ 
             //se lo status è normal richiamo la follow che dovrebbe seguire pacman
             case NORMAL:
@@ -263,7 +320,7 @@ struct position ghosts_move(struct ghosts *G, struct pacman *P, unsigned int id)
             case UNK_GHOST_STATUS:
                     break;
         }
-    }
+    } else pos = UNK_POSITION;
     //ritorno la nuova posizione del ghost che è variata solo se le condizioni sono risultate idonee
     G->ghost[id].pos = pos; 
     return pos;
