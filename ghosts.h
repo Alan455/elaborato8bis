@@ -1,7 +1,7 @@
 //#define TEST_SETUP
-//#define TEST_MOVE
+#define TEST_MOVE
 //#define TEST_MOVE2	
-#define TEST_FITNESS
+//#define TEST_FITNESS
 
 #ifndef GHOSTS_H 
 #define GHOSTS_H
