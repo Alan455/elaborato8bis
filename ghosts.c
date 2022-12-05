@@ -101,7 +101,7 @@ enum ghost_status ghosts_get_status(struct ghosts* G, unsigned int id) {
     return UNK_GHOST_STATUS;
 }
 
-static int nearby_home(struct ghosts *G, unsigned int nrow, unsigned int ncol, struct position pos) {
+static int nearby_home(struct ghosts* G, unsigned int nrow, unsigned int ncol, struct position pos) {
     int n = 2, a, b, i = pos.i, j = pos.j;
     char** A;
     A = G->A;
@@ -151,46 +151,41 @@ enum direction choose_dir(struct ghosts* G, struct pacman* P) {
     ghostP = G->ghost[id].pos;
     ghostP.i = G->ghost[id].pos.i;
     ghostP.j = G->ghost[id].pos.j;
-    static int direzione;
-    int tmp[4] = {0,1,2,3};
-
-    if (nearby_home(G->A, G->nrow, G->ncol, ghostP))
-       if (legal_dir(G, P, ghostP, UP, status, id))
-            direzione = UP;
-       
-    if (legal_dir(G, P, ghostP, direzione, status, id)) return direzione;
+    static int direzione = 0;
+    int tmp[4] = { 0,1,2,3 };
 
     for (i = 0; i < 4; i++) {
-            tmp[i] = legal_dir(G, P, ghostP, i, status, id);
+        tmp[i] = legal_dir(G, P, ghostP, i, status, id);
     }
 
-    switch (direzione){
-        case 0:
-            if (tmp[1]) direzione = tmp[1];
-            if (tmp[3]) direzione = tmp[3];
-            if (tmp[2]) direzione = tmp[2];
-            break;
-        case 1:
-            if (tmp[0] == 0) direzione = tmp[0];
-            if (tmp[2]) direzione = tmp[2];
-            if (tmp[3]) direzione = tmp[3];
-            break;
-        case 2:
-            if (tmp[1]) direzione = tmp[1];
-            if (tmp[3]) direzione = tmp[3];
-            if (tmp[0] == 0) direzione = tmp[0];
-            break;
-        case 3:
-            if (tmp[0] == 0) direzione = tmp[0];
-            if (tmp[2]) direzione = tmp[2];
-            if (tmp[1]) direzione = tmp[1];
-            break;
+    if (nearby_home(G->A, G->nrow, G->ncol, ghostP))
+        if (tmp[1]) return UP;
+
+    if (legal_dir(G, P, ghostP, direzione, status, id)) return direzione;
+
+    switch (direzione) {
+    case 0:
+        if (tmp[1]) direzione = tmp[1]; break;
+        if (tmp[3]) direzione = tmp[3]; break;
+        if (tmp[2]) direzione = tmp[2]; break;
+    case 1:
+        if (tmp[0] == 0) direzione = tmp[0]; break;
+        if (tmp[2]) direzione = tmp[2]; break;
+        if (tmp[3]) direzione = tmp[3]; break;
+    case 2:
+        if (tmp[1]) direzione = tmp[1]; break;
+        if (tmp[3]) direzione = tmp[3]; break;
+        if (tmp[0] == 0) direzione = tmp[0]; break;
+    case 3:
+        if (tmp[0] == 0) direzione = tmp[0]; break;
+        if (tmp[2]) direzione = tmp[2]; break;
+        if (tmp[1]) direzione = tmp[1]; break;
+        break;
 
     }
-
 }
 
-struct position return_pos(struct ghosts* G,enum direction dir,unsigned int id) {
+struct position return_pos(struct ghosts* G, enum direction dir, unsigned int id) {
     struct position ghostP;
     ghostP = G->ghost[id].pos;
     int rows, cols, ghostPi, ghostPj;
@@ -211,12 +206,12 @@ struct position return_pos(struct ghosts* G,enum direction dir,unsigned int id) 
 static struct position follow(struct ghosts* G, struct pacman* P, unsigned int id) {
     //nearby_home(G);
 }
-    
+
 
 
 //funzione per scappare da pacman, simile alla precedente funzione follow ma inversa
 static struct position escape(struct ghosts* G, struct pacman* P, unsigned int id) {
- }
+}
 
 //funzione per ritrovare casa
 static struct position wayhome(struct ghosts* G, struct pacman* P, unsigned int id) {
@@ -224,8 +219,8 @@ static struct position wayhome(struct ghosts* G, struct pacman* P, unsigned int 
     enum direction dir;
     enum ghost_status status;
     unsigned int ghostPi, ghostPj;
-    ghostP  = G->ghost[id].pos;
-    status  = G->ghost[id].status;
+    ghostP = G->ghost[id].pos;
+    status = G->ghost[id].status;
     ghostPi = G->ghost[id].pos.i;
     ghostPj = G->ghost[id].pos.j;
     switch (G->A[ghostPi][ghostPj]) {
@@ -279,21 +274,21 @@ struct position ghosts_move(struct ghosts* G, struct pacman* P, unsigned int id)
     enum ghost_status status;
     pos = G->ghost[id].pos;
     status = G->ghost[id].status;
-        switch (status) {
+    switch (status) {
 
-        case NORMAL:
-            pos = follow(G, P, id); break;
-    
-        case SCARED_NORMAL:
-            pos = escape(G, P, id); break;
-        case SCARED_BLINKING:
-            pos = escape(G, P, id); break;
-        case EYES:
-            pos = wayhome(G, P, id); break;
-        case UNK_GHOST_STATUS:
-            break;
-        }
-      //ritorno la nuova posizione del ghost che è variata solo se le condizioni sono risultate idonee
+    case NORMAL:
+        pos = follow(G, P, id); break;
+
+    case SCARED_NORMAL:
+        pos = escape(G, P, id); break;
+    case SCARED_BLINKING:
+        pos = escape(G, P, id); break;
+    case EYES:
+        pos = wayhome(G, P, id); break;
+    case UNK_GHOST_STATUS:
+        break;
+    }
+    //ritorno la nuova posizione del ghost che è variata solo se le condizioni sono risultate idonee
     G->ghost[id].pos = pos;
     return pos;
 }
